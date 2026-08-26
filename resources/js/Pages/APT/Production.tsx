@@ -1,0 +1,112 @@
+import DashboardLayout from "@/Layouts/DashboardLayout";
+import { Head, Link } from "@inertiajs/react";
+import {
+    Factory,
+    Truck,
+    Package,
+    Wrench,
+    Box,
+    Shield,
+    Users,
+    AlertCircle,
+} from "lucide-react";
+
+export default function Production({ auth }: { auth: any }) {
+    const submodules = [
+        {
+            id: 1,
+            name: "Gestión de la producción",
+            description: "Control y seguimiento de la producción.",
+            icon: Factory,
+            href: route("apt.management"),
+        },
+        {
+            id: 2,
+            name: "Gestión de proceso de embarques",
+            description: "Seguimiento de órdenes y procesos de embarque.",
+            icon: Truck,
+            href: `${route("apt.oe-tracker", { module: "apt" })}&from=production`,
+        },
+        {
+            id: 3,
+            name: "Gestión de inventarios",
+            description: "Control de existencias, lotes y ubicaciones.",
+            icon: Package,
+            href: `${route("apt.lots.index")}?from=production`,
+        },
+        {
+            id: 4,
+            name: "Gestión de maquinarias",
+            description: "Registro y mantenimiento de maquinaria operativa.",
+            icon: Wrench,
+            href: `${route("apt.status")}?from=production`,
+        },
+        {
+            id: 5,
+            name: "Gestión de equipos envasado",
+            description: "Control de equipos y unidades de envasado.",
+            icon: Box,
+            href: `${route("apt.unit-status")}?from=production`,
+        },
+        {
+            id: 6,
+            name: "Gestión de equipos de seguridad",
+            description: "Administración y control de equipos de seguridad.",
+            icon: Shield,
+            href: `${route("apt.scanner")}?from=production`,
+        },
+        {
+            id: 7,
+            name: "Gestión prestadores de servicios",
+            description: "Administración de proveedores y prestadores.",
+            icon: Users,
+            href: `${route("apt.status")}?from=production`,
+        },
+        {
+            id: 8,
+            name: "Gestión de requerimientos",
+            description: "Registro y seguimiento de solicitudes operativas.",
+            icon: AlertCircle,
+            href: `${route("apt.status")}?from=production`,
+        },
+    ];
+
+    return (
+        <DashboardLayout user={auth.user} header="Gestión de la Producción">
+            <Head title="Gestión de la Producción" />
+
+            <div className="py-12">
+                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                    <div className="max-w-7xl mx-auto">
+                        <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                            Submódulos
+                        </h2>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {submodules.map((item) => (
+                                <Link
+                                    key={item.id}
+                                    href={item.href}
+                                    className="group bg-white rounded-xl shadow-md border-2 border-transparent p-8 flex flex-col items-center justify-center text-center transition-all duration-300 hover:shadow-xl hover:border-emerald-500"
+                                >
+                                    <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6 bg-emerald-50 text-emerald-600 transition-transform group-hover:scale-110">
+                                        <item.icon className="w-10 h-10" />
+                                    </div>
+                                    <span className="text-sm font-semibold text-gray-500 mb-2">
+                                        {item.id}
+                                    </span>
+                                    <h3 className="text-xl font-bold text-gray-800 break-words w-full">
+                                        {item.name}
+                                    </h3>
+                                    <p className="text-gray-500 mt-2 text-sm">
+                                        {item.description}
+                                    </p>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </DashboardLayout>
+    );
+}

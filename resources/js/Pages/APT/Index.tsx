@@ -1,0 +1,157 @@
+import DashboardLayout from "@/Layouts/DashboardLayout";
+import { Head, Link } from "@inertiajs/react";
+import {
+    Printer,
+    UserPlus,
+    Search,
+    Ship,
+    Anchor,
+    Scan,
+    LayoutDashboard,
+    Database,
+    Truck,
+    ArrowLeft,
+    Factory,
+    Package,
+    Wrench,
+    Box,
+    Shield,
+    Users,
+    AlertCircle,
+} from "lucide-react";
+
+export default function Index({ auth, productionMode = false }: { auth: any; productionMode?: boolean }) {
+    const productionSubmodules = [
+        { name: "Gestión de la producción", description: "Control y seguimiento de la producción.", icon: Factory, href: route("apt.management"), color: "bg-green-50 text-green-600", hover: "hover:border-green-500" },
+        { name: "Gestión de proceso de embarques", description: "Seguimiento de órdenes y procesos de embarque.", icon: Truck, href: `${route("apt.oe-tracker", { module: "apt" })}&from=production`, color: "bg-blue-50 text-blue-600", hover: "hover:border-blue-500" },
+        { name: "Gestión de inventarios", description: "Control de existencias, lotes y ubicaciones.", icon: Package, href: `${route("apt.lots.index")}?from=production`, color: "bg-purple-50 text-purple-600", hover: "hover:border-purple-500" },
+        { name: "Gestión de maquinarias", description: "Registro y mantenimiento de maquinaria operativa.", icon: Wrench, href: `${route("apt.status")}?from=production`, color: "bg-orange-50 text-orange-600", hover: "hover:border-orange-500" },
+        { name: "Gestión de equipos envasado", description: "Control de equipos y unidades de envasado.", icon: Box, href: `${route("apt.unit-status")}?from=production`, color: "bg-yellow-50 text-yellow-600", hover: "hover:border-yellow-500" },
+        { name: "Gestión de equipos de seguridad", description: "Administración y control de equipos de seguridad.", icon: Shield, href: `${route("apt.scanner")}?from=production`, color: "bg-slate-100 text-slate-600", hover: "hover:border-slate-500" },
+        { name: "Gestión prestadores de servicios", description: "Administración de proveedores y prestadores.", icon: Users, href: `${route("apt.status")}?from=production`, color: "bg-indigo-50 text-indigo-600", hover: "hover:border-indigo-500" },
+        { name: "Gestión de requerimientos", description: "Registro y seguimiento de solicitudes operativas.", icon: AlertCircle, href: `${route("apt.status")}?from=production`, color: "bg-cyan-50 text-cyan-600", hover: "hover:border-cyan-500" },
+    ];
+
+    if (productionMode) {
+        return (
+            <DashboardLayout user={auth.user} header="Gestión de la Producción">
+                <Head title="Gestión de la Producción" />
+                <div data-production-page="true" className="py-12">
+                    <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                        <div className="mb-8">
+                            <Link
+                                href={route("apt.index")}
+                                className="inline-flex items-center text-gray-500 hover:text-emerald-600 transition-colors bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm text-sm font-medium mb-5"
+                            >
+                                <ArrowLeft className="w-4 h-4 mr-1" />
+                                Volver al menú
+                            </Link>
+                            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                                Gestión de la Producción
+                            </h2>
+                            <p className="text-gray-600">
+                                Selecciona un submódulo para continuar.
+                            </p>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {productionSubmodules.map((item, index) => (
+                                <Link key={item.name} href={item.href} className={`group bg-white rounded-xl shadow-md border-2 border-transparent p-8 flex flex-col items-center justify-center text-center transition-all duration-300 hover:shadow-xl ${item.hover}`}>
+                                    <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-6 transition-transform group-hover:scale-110 ${item.color}`}>
+                                        <item.icon className="w-10 h-10" />
+                                    </div>
+                                    <span className="text-sm font-semibold text-gray-500 mb-2">{index + 1}</span>
+                                    <h3 className="text-xl font-bold text-gray-800 break-words w-full">{item.name}</h3>
+                                    <p className="text-gray-500 mt-2 text-sm">{item.description}</p>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </DashboardLayout>
+        );
+    }
+
+    const menuItems = [
+        {
+            name: "Escanear Entrada",
+            icon: Scan,
+            href: route("apt.scanner"),
+            description: "Escanear código QR para registrar entrada/salida.",
+            color: "bg-purple-50 text-purple-600",
+            hover: "hover:border-purple-500",
+        },
+        {
+            name: "Status APT",
+            icon: LayoutDashboard,
+            href: route("apt.status"),
+            description: "Visualizar ocupación de almacenes y cubículos.",
+            color: "bg-indigo-50 text-indigo-600",
+            hover: "hover:border-indigo-500",
+        },
+        {
+            name: "Gestión de Lotes",
+            icon: Database,
+            href: route("apt.lots.index"),
+            description: "Administración de lotes e inventarios.",
+            color: "bg-teal-50 text-teal-600",
+            hover: "hover:border-teal-500",
+        },
+        {
+            name: "Status Unidades",
+            icon: Truck,
+            href: route("apt.unit-status"),
+            description: "Unidades en planta esperando destare.",
+            color: "bg-blue-50 text-blue-600",
+            hover: "hover:border-blue-500",
+        },
+        {
+            name: "Seguimiento de OE",
+            icon: Search,
+            href: route("apt.oe-tracker", { module: "apt" }),
+            description: "Listado global de órdenes y embarques.",
+            color: "bg-amber-50 text-amber-600",
+            hover: "hover:border-amber-500",
+        },
+        {
+            name: "Gestión de la producción",
+            icon: Database,
+            href: route("apt.production"),
+            description: "Consultar y gestionar la producción en APT.",
+            color: "bg-emerald-50 text-emerald-600",
+            hover: "hover:border-emerald-500",
+        },
+       
+    ];
+
+    return (
+        <DashboardLayout user={auth.user} header="Administración Portuaria">
+            <Head title="APT" />
+
+            <div className="py-12">
+                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {menuItems.map((item, index) => (
+                            <Link
+                                key={index}
+                                href={item.href}
+                                className={`group bg-white rounded-xl shadow-md border-2 border-transparent p-8 flex flex-col items-center justify-center text-center transition-all duration-300 hover:shadow-xl ${item.hover}`}
+                            >
+                                <div
+                                    className={`w-20 h-20 rounded-full flex items-center justify-center mb-6 transition-transform transform group-hover:scale-110 ${item.color}`}
+                                >
+                                    <item.icon className="w-10 h-10" />
+                                </div>
+                                <h3 className="text-xl font-bold text-gray-800 break-words w-full">
+                                    {item.name}
+                                </h3>
+                                <p className="text-gray-500 mt-2 text-sm">
+                                    {item.description}
+                                </p>
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </DashboardLayout>
+    );
+}

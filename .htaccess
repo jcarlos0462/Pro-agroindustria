@@ -1,0 +1,15 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    DirectoryIndex index.php
+
+    RewriteRule ^(?:index\.php|public/index\.php)$ - [END]
+    RewriteRule ^$ public/index.php [END]
+
+    # Expose generated and public assets from the project subfolder.
+    RewriteRule ^(build|images|img|js|css|storage)(/.*)?$ public/$1$2 [END]
+
+    # Use the project entry point so the application works from the subfolder root.
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ public/index.php [END]
+</IfModule>

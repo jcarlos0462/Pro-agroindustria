@@ -22,40 +22,6 @@
     <script>
         window.currentUserRoles = @json(auth()->check() ? auth()->user()->getRoleNames() : []);
 
-        const ensureProductionNavigation = () => {
-            const currentPath = window.location.pathname.replace(/\/+$/, '');
-            const aptPath = '/apt';
-            const productionPath = '/apt/production';
-
-            if (currentPath === aptPath) {
-                const grid = document.querySelector('.grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-4');
-                if (!grid) return;
-
-                if (grid.querySelector('[data-production-card]')) return;
-
-                const card = document.createElement('a');
-                card.dataset.productionCard = 'true';
-                card.href = productionPath;
-                card.className = 'group bg-white rounded-xl shadow-md border-2 border-transparent p-8 flex flex-col items-center justify-center text-center transition-all duration-300 hover:shadow-xl hover:border-emerald-500';
-                card.innerHTML = '<div class="w-20 h-20 rounded-full flex items-center justify-center mb-6 bg-emerald-50 text-emerald-600"><span class="text-4xl">&#9881;</span></div><h3 class="text-xl font-bold text-gray-800 break-words w-full">Gestión de almacenes</h3><p class="text-gray-500 mt-2 text-sm">Consultar y gestionar los almacenes en APT.</p>';
-                grid.prepend(card);
-            }
-        };
-
-        const watchProductionNavigation = () => {
-            ensureProductionNavigation();
-            new MutationObserver(ensureProductionNavigation).observe(document.body, {
-                childList: true,
-                subtree: true,
-            });
-        };
-
-        if (document.body) {
-            watchProductionNavigation();
-        } else {
-            document.addEventListener('DOMContentLoaded', watchProductionNavigation, { once: true });
-        }
-
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then((registrations) => {
                 registrations.forEach((registration) => registration.unregister());

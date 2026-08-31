@@ -204,9 +204,14 @@
 
     <!-- Scripts -->
     @routes
+    @php
+        $viteManifestExists = file_exists(public_path('build/manifest.json'));
+    @endphp
     <!-- Cache Buster: v=3.1-migration-fix -->
-    @viteReactRefresh
-    @vite('resources/js/app.tsx')
+    @if ($viteManifestExists)
+        @viteReactRefresh
+        @vite('resources/js/app.tsx')
+    @endif
     @inertiaHead
 </head>
 

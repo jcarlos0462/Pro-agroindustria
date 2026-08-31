@@ -84,7 +84,7 @@ export default function ProductionManagement({ auth, users = [], lots = [], late
                                     <ArrowLeft className="h-5 w-5 text-white" />
                                 </Link>
                                 <img
-                                    src={`${window.location.origin}/Proagroindustria/Proagro.png`}
+                                    src="/Proagro.png"
                                     alt="Proagroindustria"
                                     className="h-[52px] w-[52px] rounded-[14px] bg-white object-contain p-1"
                                 />

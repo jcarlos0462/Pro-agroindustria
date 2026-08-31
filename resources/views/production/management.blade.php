@@ -447,7 +447,6 @@
                 saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
 
                 const formData = new FormData(form);
-                const basePath = '/Proagroindustria';
 
                 try {
                     const res = await fetch(form.action, {
@@ -465,7 +464,7 @@
                         throw new Error(firstError || data.message || `Error ${res.status} al guardar`);
                     }
 
-                    window.location.assign(`${basePath}/apt/management/activity`);
+                    window.location.assign("{{ route('apt.management.activity') }}");
                 } catch (err) {
                     errorBox.textContent = err.message || 'Error al guardar el registro';
                     errorBox.style.display = 'block';

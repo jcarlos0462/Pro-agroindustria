@@ -268,4 +268,9 @@ Route::middleware('auth')->group(function () {
 
     });
 
+// Compatibility redirect for legacy or cached URLs containing /Proagroindustria/
+Route::any('/Proagroindustria/{path?}', function ($path = '') {
+    return redirect('/' . ltrim($path, '/'), 301);
+})->where('path', '.*');
+
 require __DIR__ . '/auth.php';

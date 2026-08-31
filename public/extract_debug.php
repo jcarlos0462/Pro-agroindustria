@@ -4,7 +4,8 @@
  * Escribe en deploy_debug_log.txt
  */
 
-$logFile = 'deploy_debug_log.txt';
+$applicationRoot = dirname(__DIR__);
+$logFile = __DIR__ . '/deploy_debug_log.txt';
 
 function logMsg($msg)
 {
@@ -67,7 +68,7 @@ if ($res === TRUE) {
 
     // Intentar extraer al directorio PADRE (ROOT)
     try {
-        $targetDir = dirname(__DIR__); // Sube un nivel
+        $targetDir = $applicationRoot;
         logMsg("Extrayendo en: $targetDir");
         $extracted = $zip->extractTo($targetDir);
         if ($extracted) {
@@ -84,15 +85,18 @@ if ($res === TRUE) {
     // 5. Post-Verificación (Checar si un archivo clave se actualizó)
     // Ejemplo: Sidebar.tsx fecha de modificación
     // Como es JS compilado, checamos public/build/manifest.webmanifest
-    if (file_exists('public/build/manifest.webmanifest')) {
-        logMsg("Manifest timestamp: " . date("Y-m-d H:i:s", filemtime('public/build/manifest.webmanifest')));
+    $manifestPath = __DIR__ . '/build/manifest.json';
+    if (file_exists($manifestPath)) {
+        logMsg("Manifest timestamp: " . date("Y-m-d H:i:s", filemtime($manifestPath)));
+    } else {
+        logMsg("ERROR CRITICO: No se encontró public/build/manifest.json después de extraer.");
     }
 
     // 6. LIMPIEZA DE CACHÉ LARAVEL (CRITICO PARA ACTUALIZACION UI)
     logMsg("Intentando limpiar caché de Laravel...");
     try {
         // NUKE MANUAL DE CACHÉ DE BOOTSTRAP (Vital si config.php tiene rutas viejas)
-        $bootstrapCache = glob(__DIR__ . '/bootstrap/cache/*.php');
+        $bootstrapCache = glob($applicationRoot . '/bootstrap/cache/*.php');
         foreach ($bootstrapCache as $file) {
             if (is_file($file)) {
                 unlink($file);
@@ -100,19 +104,19 @@ if ($res === TRUE) {
             }
         }
 
-        if (file_exists(__DIR__ . '/vendor/autoload.php')) {
-            require __DIR__ . '/vendor/autoload.php';
-            $app = require_once __DIR__ . '/bootstrap/app.php';
+        if (file_exists($applicationRoot . '/vendor/autoload.php')) {
+            require $applicationRoot . '/vendor/autoload.php';
+            $app = require_once $applicationRoot . '/bootstrap/app.php';
             $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
             $kernel->bootstrap();
 
             // REPARAR ESTRUCTURA DE DIRECTORIOS (Prevent 'View path not found')
             $storagePaths = [
-                __DIR__ . '/storage/framework/views',
-                __DIR__ . '/storage/framework/cache',
-                __DIR__ . '/storage/framework/sessions',
-                __DIR__ . '/storage/logs',
-                __DIR__ . '/bootstrap/cache',
+                $applicationRoot . '/storage/framework/views',
+                $applicationRoot . '/storage/framework/cache',
+                $applicationRoot . '/storage/framework/sessions',
+                $applicationRoot . '/storage/logs',
+                $applicationRoot . '/bootstrap/cache',
             ];
 
             foreach ($storagePaths as $path) {

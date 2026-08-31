@@ -15,6 +15,10 @@
 
     RewriteEngine On
 
+    # Compatibility with clients that still have the former local path cached.
+    RewriteRule ^Proagroindustria/(.*)$ /$1 [R=301,L,NE]
+    RewriteRule ^Proagroindustria/?$ / [R=301,L,NE]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
@@ -30,5 +34,7 @@
 
     # Send Requests To Front Controller...
     RewriteRule ^index\.php$ - [END]
-    RewriteRule ^ /Proagroindustria/index.php [END]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [END]
 </IfModule>

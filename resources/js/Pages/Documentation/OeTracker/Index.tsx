@@ -458,14 +458,16 @@ export default function OeTrackerIndex({
         client_id?: string,
         product_id?: string
     } = {}) => {
+        const fromParam = new URLSearchParams(window.location.search).get("from") || filters.from;
         router.get(
-            "/documentation/oe-tracker",
+            route("documentation.oe-tracker"),
             {
                 search: params.search !== undefined ? params.search : search,
                 in_plant: params.in_plant !== undefined ? params.in_plant : inPlant,
                 client_id: params.client_id !== undefined ? params.client_id : selectedClient,
                 product_id: params.product_id !== undefined ? params.product_id : selectedProduct,
-                module: filters.module
+                module: filters.module,
+                ...(fromParam ? { from: fromParam } : {})
             },
             { preserveState: true, replace: true }
         );
@@ -489,6 +491,8 @@ export default function OeTrackerIndex({
         amber: "hover:text-amber-700 hover:bg-amber-50",
     };
 
+    const isFromProduction = (filters.module === 'apt' && (new URLSearchParams(window.location.search).get("from") === "production" || filters.from === 'production'));
+
     return (
         <DashboardLayout user={auth.user} header="Seguimiento de OE del Día">
             <Head title="Seguimiento de OE" />
@@ -498,11 +502,27 @@ export default function OeTrackerIndex({
                 <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
                         <Link
-                            href={filters.module === 'scale' ? "/scale" : filters.module === 'apt' && new URLSearchParams(window.location.search).get("from") === "production" ? "/apt/production" : filters.module === 'apt' ? "/apt" : "/documentation"}
+                            href={
+                                filters.module === 'scale'
+                                    ? route('scale.index')
+                                    : isFromProduction
+                                        ? route('apt.production')
+                                        : filters.module === 'apt'
+                                            ? route('apt.index')
+                                            : route('documentation.index')
+                            }
                             className="text-gray-500 hover:text-gray-900 flex items-center text-sm font-medium transition-colors mb-2"
                         >
                             <ArrowLeft className="w-4 h-4 mr-1" />
-                            {filters.module === 'scale' ? "Volver a Báscula" : filters.module === 'apt' && new URLSearchParams(window.location.search).get("from") === "production" ? "Volver a Gestión de la Producción" : filters.module === 'apt' ? "Volver a APT" : "Volver a Documentación"}
+                            {
+                                filters.module === 'scale'
+                                    ? "Volver a Báscula"
+                                    : isFromProduction
+                                        ? "Volver al menú de submódulos"
+                                        : filters.module === 'apt'
+                                            ? "Volver a APT"
+                                            : "Volver a Documentación"
+                            }
                         </Link>
                         <h2 className="text-2xl font-bold text-indigo-900 flex items-center">
                             <Clock className="mr-3 h-7 w-7 text-indigo-600" />

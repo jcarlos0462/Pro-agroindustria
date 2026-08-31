@@ -9,6 +9,7 @@ import {
     Shield,
     Users,
     AlertCircle,
+    ArrowLeft,
 } from "lucide-react";
 
 export default function Production({ auth }: { auth: any }) {
@@ -18,7 +19,7 @@ export default function Production({ auth }: { auth: any }) {
             name: "Gestión de la producción",
             description: "Control y seguimiento de la producción.",
             icon: Factory,
-            href: route("apt.management"),
+            href: `${route("apt.management")}?from=production`,
         },
         {
             id: 2,
@@ -72,12 +73,21 @@ export default function Production({ auth }: { auth: any }) {
     ];
 
     return (
-        <DashboardLayout user={auth.user} header="Gestión de la Producción">
-            <Head title="Gestión de la Producción" />
+        <DashboardLayout user={auth.user} header="Gestión de almacenes">
+            <Head title="Gestión de almacenes" />
 
             <div className="py-12">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                     <div className="max-w-7xl mx-auto">
+                        <div className="mb-6">
+                            <Link
+                                href={route("apt.index")}
+                                className="inline-flex items-center text-gray-500 hover:text-emerald-600 transition-colors bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm text-sm font-medium mb-2"
+                            >
+                                <ArrowLeft className="w-4 h-4 mr-1" />
+                                Volver al menú principal APT
+                            </Link>
+                        </div>
                         <h2 className="text-2xl font-bold text-gray-900 mb-6">
                             Submódulos
                         </h2>

@@ -51,7 +51,7 @@ export default function RegisterOperator({
                         className="text-gray-500 hover:text-gray-900 flex items-center text-sm font-medium"
                     >
                         <ArrowLeft className="w-4 h-4 mr-1" />
-                        {new URLSearchParams(window.location.search).get("from") === "production" ? "Volver a Gestión de la Producción" : "Volver al menú APT"}
+                        {new URLSearchParams(window.location.search).get("from") === "production" ? "Volver al menú de submódulos" : "Volver al menú APT"}
                     </Link>
                 </div>
 

@@ -81,6 +81,7 @@ export default function UnitStatus({
         if (key === 'search') setSearchQuery(value);
         if (key === 'tab') setOperationType(value as 'sale' | 'vessel');
 
+        const from = new URLSearchParams(window.location.search).get("from");
         router.get(route('apt.unit-status'), {
             client_id: key === 'client_id' ? value : selectedClient,
             product_id: key === 'product_id' ? value : selectedProduct,
@@ -88,6 +89,7 @@ export default function UnitStatus({
             presentation: key === 'presentation' ? value : selectedPresentation,
             search: key === 'search' ? value : (key === 'tab' ? '' : searchQuery),
             tab: key === 'tab' ? value : operationType,
+            ...(from ? { from } : {}),
         }, {
             preserveState: true,
             preserveScroll: true,
@@ -108,7 +110,7 @@ export default function UnitStatus({
                                 className="flex items-center text-gray-500 hover:text-indigo-600 transition-colors bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm text-sm font-medium"
                             >
                                 <ArrowLeft className="w-4 h-4 mr-1" />
-                                {new URLSearchParams(window.location.search).get("from") === "production" ? "Volver a Gestión de la Producción" : "Volver"}
+                                {new URLSearchParams(window.location.search).get("from") === "production" ? "Volver al menú de submódulos" : "Volver"}
                             </Link>
                             <h2 className="text-xl font-bold text-gray-800 flex items-center border-l-4 border-indigo-500 pl-4">
                                 <Truck className="w-6 h-6 mr-2 text-indigo-600" />

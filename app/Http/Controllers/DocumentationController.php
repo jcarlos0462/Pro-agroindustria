@@ -939,6 +939,7 @@ class DocumentationController extends Controller
         $clientId = $request->input('client_id', '');
         $productId = $request->input('product_id', '');
         $module = $request->input('module');
+        $from = $request->input('from');
 
         // Auto-detect module from route name if not explicitly provided
         if (!$module) {
@@ -1278,6 +1279,7 @@ class DocumentationController extends Controller
             'filters'  => [
                 'search' => $search,
                 'module' => $module,
+                'from' => $from,
                 'in_plant' => $inPlant,
                 'client_id' => $clientId,
                 'product_id' => $productId,

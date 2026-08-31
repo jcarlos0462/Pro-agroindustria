@@ -5,6 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="google" content="notranslate">
+    <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
 
     <title inertia><?php echo e(config('app.name', 'Laravel')); ?></title>
     <link rel="icon" type="image/png"
@@ -40,21 +41,43 @@
                 subtree: true,
             });
 
+            window.currentUserRoles = <?php echo json_encode(auth()->check() ? auth()->user()->getRoleNames() : [], 15, 512) ?>;
+
             const ensureProductionNavigation = () => {
                 const currentPath = window.location.pathname.replace(/\/+$/, '');
                 const aptPath = `${basePath}/apt`;
                 const productionPath = `${basePath}/apt/production`;
+                const userRoles = window.currentUserRoles || [];
+                const isJefeOrAdmin = userRoles.includes('Jefe de Almacen') || userRoles.includes('Admin');
+                const isAlmacenOnly = userRoles.includes('Almacen') && !isJefeOrAdmin;
 
                 if (currentPath === aptPath) {
                     const grid = document.querySelector('.grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-4');
-                    if (!grid || grid.querySelector('[data-production-card]')) return;
+                    if (!grid) return;
+
+                    if (isAlmacenOnly) {
+                        const allowedHrefs = [
+                            `${basePath}/apt/production`,
+                            `${basePath}/apt/scanner`,
+                            `${basePath}/apt/status-unidades`,
+                            `${basePath}/apt/oe-tracker`
+                        ];
+                        grid.querySelectorAll('a[href]').forEach((link) => {
+                            const isAllowed = allowedHrefs.some((allowed) => link.href.includes(allowed));
+                            if (!isAllowed) {
+                                link.style.display = 'none';
+                            }
+                        });
+                    }
+
+                    if (grid.querySelector('[data-production-card]')) return;
 
                     const card = document.createElement('a');
                     card.dataset.productionCard = 'true';
                     card.href = `${productionPath}`;
                     card.className = 'group bg-white rounded-xl shadow-md border-2 border-transparent p-8 flex flex-col items-center justify-center text-center transition-all duration-300 hover:shadow-xl hover:border-emerald-500';
-                    card.innerHTML = '<div class="w-20 h-20 rounded-full flex items-center justify-center mb-6 bg-emerald-50 text-emerald-600"><span class="text-4xl">&#9881;</span></div><h3 class="text-xl font-bold text-gray-800 break-words w-full">Gestión de la producción</h3><p class="text-gray-500 mt-2 text-sm">Consultar y gestionar la producción en APT.</p>';
-                    grid.appendChild(card);
+                    card.innerHTML = '<div class="w-20 h-20 rounded-full flex items-center justify-center mb-6 bg-emerald-50 text-emerald-600"><span class="text-4xl">&#9881;</span></div><h3 class="text-xl font-bold text-gray-800 break-words w-full">Gestión de almacenes</h3><p class="text-gray-500 mt-2 text-sm">Consultar y gestionar los almacenes en APT.</p>';
+                    grid.prepend(card);
                     normalizeLinks();
                     return;
                 }
@@ -75,116 +98,13 @@
                     ['Gestión de requerimientos', 'Registro y seguimiento de solicitudes operativas.', '/apt/status?from=production', 'fa-circle-exclamation', 'bg-cyan-50 text-cyan-600', 'hover:border-cyan-500'],
                 ];
 
-                content.innerHTML = `<div class="max-w-7xl mx-auto sm:px-6 lg:px-8" data-production-page="true"><div class="mb-8"><a href="${aptPath}" class="inline-flex items-center text-gray-500 hover:text-emerald-600 transition-colors bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm text-sm font-medium mb-5">&larr; Volver al menú APT</a><h2 class="text-3xl font-bold text-gray-900 mb-2">Gestión de la Producción</h2><p class="text-gray-600">Selecciona un submódulo para continuar.</p></div><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">${submodules.map(([name, description, href, icon, color, hover], index) => `<a href="${basePath}${href}" class="group bg-white rounded-xl shadow-md border-2 border-transparent p-8 flex flex-col items-center justify-center text-center transition-all duration-300 hover:shadow-xl ${hover}"><div class="w-20 h-20 rounded-full flex items-center justify-center mb-6 text-3xl transition-transform group-hover:scale-110 ${color}"><i class="fa-solid ${icon}"></i></div><span class="text-sm font-semibold text-gray-500 mb-2">${index + 1}</span><h3 class="text-xl font-bold text-gray-800 break-words w-full">${name}</h3><p class="text-gray-500 mt-2 text-sm">${description}</p></a>`).join('')}</div></div>`;
+                content.innerHTML = `<div class="max-w-7xl mx-auto sm:px-6 lg:px-8" data-production-page="true"><div class="mb-8"><a href="${aptPath}" class="inline-flex items-center text-gray-500 hover:text-emerald-600 transition-colors bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm text-sm font-medium mb-5">&larr; Volver al menú APT</a><h2 class="text-3xl font-bold text-gray-900 mb-2">Gestión de almacenes</h2><p class="text-gray-600">Selecciona un submódulo para continuar.</p></div><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">${submodules.map(([name, description, href, icon, color, hover], index) => `<a href="${basePath}${href}" class="group bg-white rounded-xl shadow-md border-2 border-transparent p-8 flex flex-col items-center justify-center text-center transition-all duration-300 hover:shadow-xl ${hover}"><div class="w-20 h-20 rounded-full flex items-center justify-center mb-6 text-3xl transition-transform group-hover:scale-110 ${color}"><i class="fa-solid ${icon}"></i></div><span class="text-sm font-semibold text-gray-500 mb-2">${index + 1}</span><h3 class="text-xl font-bold text-gray-800 break-words w-full">${name}</h3><p class="text-gray-500 mt-2 text-sm">${description}</p></a>`).join('')}</div></div>`;
                 normalizeLinks();
-            };
-
-            const ensureProductionShiftForm = () => {
-                const currentPath = window.location.pathname.replace(/\/+$/, '');
-                const productionManagementPath = `${basePath}/apt/management`;
-                if (currentPath !== productionManagementPath && currentPath !== `${basePath}/apt/status`) return;
-                if (currentPath !== productionManagementPath && new URLSearchParams(window.location.search).get('from') !== 'production') return;
-
-                if (currentPath === productionManagementPath) {
-                    document.title = 'Gestión de la Producción';
-                    const headerTitle = document.querySelector('header h1');
-                    if (headerTitle) headerTitle.textContent = 'Gestión de la Producción';
-                }
-                if (document.querySelector('[data-production-shift-form]')) return;
-
-                const dashboard = document.querySelector('.max-w-7xl.mx-auto.py-8');
-                if (!dashboard) return;
-
-                const form = document.createElement('section');
-                form.dataset.productionShiftForm = 'true';
-                form.className = 'max-w-7xl mx-auto mb-8 overflow-hidden rounded-3xl border border-sky-200 bg-white shadow-xl';
-                form.style.cssText = 'max-width:1200px;margin:0 auto 32px;overflow:hidden;border-radius:24px;border:1px solid #bae6fd;background:#fff;box-shadow:0 20px 45px -24px rgba(15,23,42,.45);';
-                form.innerHTML = `
-                    <div data-shift-header style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:22px 28px;background:linear-gradient(110deg,#0369a1,#1d4ed8);color:#fff;">
-                        <div><p style="margin:0;color:#e0f2fe;font-size:11px;font-weight:900;letter-spacing:2px;text-transform:uppercase;">Gestión de la producción</p><h2 style="margin:5px 0 0;color:#fff;font-size:28px;font-weight:900;">Registro de inicio de turno</h2></div>
-                        <span data-shift-saved style="display:none;align-items:center;gap:8px;border-radius:999px;background:rgba(52,211,153,.2);padding:7px 12px;color:#d1fae5;font-size:12px;font-weight:800;">&#10003; Guardado</span>
-                    </div>
-                    <form data-shift-inner-form class="grid gap-6 p-6 lg:grid-cols-3" style="padding:28px;">
-                        <div class="space-y-5">
-                            <label class="block text-sm font-black uppercase tracking-wide text-sky-700">Usuario asignado<select data-shift-user required class="mt-2 w-full rounded-xl border-sky-200 px-4 py-3 font-semibold text-slate-700"><option value="">Seleccionar</option><option value="<?php echo e(auth()->id()); ?>"><?php echo e(auth()->user()->name ?? 'Usuario actual'); ?></option></select></label>
-                            <label class="block text-sm font-black uppercase tracking-wide text-sky-700">Turno<select data-shift-turn required class="mt-2 w-full rounded-xl border-sky-200 px-4 py-3 font-semibold text-slate-700"><option value="">Seleccionar</option><option>Turno 1</option><option>Turno 2</option><option>Turno 3</option><option>Turno 1A</option><option>Turno 1B</option></select></label>
-                        </div>
-                        <div class="space-y-5">
-                            <label class="block text-sm font-black uppercase tracking-wide text-sky-700">Puesto<input value="Automático" readonly class="mt-2 w-full rounded-xl border-sky-200 bg-slate-50 px-4 py-3 font-semibold text-slate-500" /></label>
-                            <label class="block text-sm font-black uppercase tracking-wide text-sky-700">Lote en recepción<select data-shift-lot required class="mt-2 w-full rounded-xl border-sky-200 px-4 py-3 font-semibold text-slate-700"><option value="">Seleccionar</option><option>Lote 1</option><option>Lote 2</option><option>Lote 3</option></select></label>
-                        </div>
-                        <div class="flex flex-col justify-between gap-5">
-                            <div style="border:1px solid #bae6fd;border-radius:12px;background:#f8fafc;padding:13px 16px;font-weight:700;color:#64748b;">&#128197; Fecha: ${new Date().toLocaleDateString('es-MX')}</div>
-                            <button type="button" data-shift-camera-button style="display:flex;min-height:82px;width:100%;align-items:center;justify-content:center;gap:12px;border:2px dashed #bae6fd;border-radius:16px;background:#f0f9ff;padding:16px;color:#0369a1;font-size:13px;font-weight:900;cursor:pointer;"><i class="fa-solid fa-camera" style="font-size:26px;"></i><span data-shift-photo-label>ACTIVAR CÁMARA</span></button>
-                            <div data-shift-camera-panel class="relative hidden overflow-hidden rounded-xl bg-black" style="border-radius:20px;box-shadow:0 0 0 4px #e0f2fe,0 18px 35px -15px rgba(15,23,42,.5);"><video data-shift-video autoplay playsinline muted class="h-48 w-full object-cover"></video><button type="button" data-shift-close class="absolute right-3 top-3 rounded-full bg-black/60 px-3 py-2 text-white">&#10005;</button><div class="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/90 to-transparent p-4 pt-10"><span class="text-xs font-bold text-white"><i class="fa-solid fa-circle" style="color:#34d399;font-size:8px;"></i> Cámara activa</span><button type="button" data-shift-capture class="rounded-xl bg-sky-500 px-4 py-2 text-xs font-black text-white">CAPTURAR</button></div></div>
-                            <button type="submit" class="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-600 px-5 py-3 font-black text-white shadow-lg hover:bg-sky-700">&#128190; Guardar</button>
-                        </div>
-                    </form>`;
-
-                const innerForm = form.querySelector('[data-shift-inner-form]');
-                const saved = form.querySelector('[data-shift-saved]');
-                const cameraButton = form.querySelector('[data-shift-camera-button]');
-                const cameraPanel = form.querySelector('[data-shift-camera-panel]');
-                const video = form.querySelector('[data-shift-video]');
-                let cameraStream = null;
-                let capturedEvidence = null;
-                cameraButton.addEventListener('click', async () => {
-                    try {
-                        cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
-                        video.srcObject = cameraStream;
-                        cameraPanel.classList.remove('hidden');
-                        cameraButton.classList.add('hidden');
-                    } catch {
-                        form.querySelector('[data-shift-photo-label]').textContent = 'Permiso de cámara requerido';
-                    }
-                });
-                const closeCamera = () => {
-                    cameraStream?.getTracks().forEach((track) => track.stop());
-                    cameraStream = null;
-                    cameraPanel.classList.add('hidden');
-                    cameraButton.classList.remove('hidden');
-                };
-                form.querySelector('[data-shift-close]').addEventListener('click', closeCamera);
-                form.querySelector('[data-shift-capture]').addEventListener('click', () => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = video.videoWidth || 1280;
-                    canvas.height = video.videoHeight || 720;
-                    canvas.getContext('2d')?.drawImage(video, 0, 0, canvas.width, canvas.height);
-                    capturedEvidence = canvas.toDataURL('image/jpeg', 0.85);
-                    form.querySelector('[data-shift-photo-label]').textContent = 'Evidencia capturada';
-                    closeCamera();
-                });
-                innerForm.addEventListener('submit', async (event) => {
-                    event.preventDefault();
-                    const payload = new FormData();
-                    payload.append('user_id', form.querySelector('[data-shift-user]').value);
-                    payload.append('position', 'Automático');
-                    payload.append('shift', form.querySelector('[data-shift-turn]').value);
-                    payload.append('lot_id', form.querySelector('[data-shift-lot]').value);
-                    if (capturedEvidence) {
-                        const evidenceBlob = await fetch(capturedEvidence).then((response) => response.blob());
-                        payload.append('evidence', evidenceBlob, `evidencia-${Date.now()}.jpg`);
-                    }
-                    const xsrf = decodeURIComponent(document.cookie.split('; ').find((cookie) => cookie.startsWith('XSRF-TOKEN='))?.split('=')[1] || '');
-                    fetch(`${basePath}/apt/management/turno`, {
-                        method: 'POST',
-                        body: payload,
-                        headers: { 'X-XSRF-TOKEN': xsrf, 'X-Requested-With': 'XMLHttpRequest' },
-                    }).then((response) => {
-                        if (!response.ok) throw new Error('No se pudo guardar');
-                        saved.style.display = 'inline-flex';
-                    }).catch(() => {
-                        form.querySelector('[data-shift-photo-label]').textContent = 'Error al guardar el registro';
-                    });
-                });
-                dashboard.style.display = 'none';
-                dashboard.before(form);
             };
 
             const watchProductionNavigation = () => {
                 const updateProductionNavigation = () => {
                     ensureProductionNavigation();
-                    ensureProductionShiftForm();
                 };
 
                 updateProductionNavigation();
@@ -212,7 +132,7 @@
                 if (!applicationPaths.test(applicationPath)) return;
 
                 const productionPage = `${basePath}/apt/production`;
-                const productionSubmodule = /^\/Proagroindustria\/apt\/(status|status-unidades|scanner|lots|oe-tracker)(\/|$)/;
+                const productionSubmodule = /^\/Proagroindustria\/apt\/(status|status-unidades|scanner|lots|oe-tracker|management)(\/|$)/;
                 const cameFromProduction = new URLSearchParams(window.location.search).get('from') === 'production';
                 const aptMenuPath = path === 'apt' || path === `${basePath.slice(1)}/apt`;
                 if (cameFromProduction && productionSubmodule.test(window.location.pathname) && aptMenuPath) {
@@ -249,6 +169,38 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        html,
+        body,
+        *,
+        *::before,
+        *::after {
+            cursor: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAPzSURBVGhD7ddvaBtlGADwW6dIcrn8aTPL5e7eey/J0rTuj+Zyd7nYWTZBC4OBjDDFD/4ZzH/rbO6SNmnWxVVXlVUF8csYm5ulY/hl6wfBb6N2Vq26NVyaIdbRdnWZtritq5VCxyPRL+W++M1k7H5wX573eR54ed/nhSMIi8VisVgsFsv9a2LLFvIHUXzQHL9nTARxviCgLwt+7rMLm0LhCy0tDnNOTSsE8ImCH5UKCH8xhZnVSwKfHd282WPOq1kFjPp/CgrnC340UEK+uckAf+oPzN0ygmivObcmGZg9+Dtm7xT8aPz7R5r3XmHp8g3MLF8KCNlyILDn8tatbnNNTTGCXMAI4g+uCfjc5Y3+VyZZ+kYBcSeLHPsNCAiKPHveXFORSCTWm2NV8Xkisb7E+Zb+4lmY4ugFQ8CfToQC2hxiYJb1rZR4/u3rAb59JBymK/kNB1TJrcUGxH018nLlCaLO4PmcgfHAtB8NGEHh9R+bm5+8iTkwOPZYCTFDKwILMz7mYlhrDdlzypIjKR4196m6ScSM3UIMLPEMXEHMnIGRMSngd39mfTCPGLhGM5/UZaVhsl8FdyrWweitChCwztynKsZirK2E2NkZxKwWEXt2KoAHxzaF24wm/PQ8z8KvtO/2C8+Kr9ZlxLv2rASe9ONvuXT5uqsnVvBq8nNEPl9n7vm/mxCEUNHvf/EXjM5M8+jbqzw7OC4Iu6/yzPLCBnrcllbet/VKYO+RwKlJH1Ga9J3zcBxcGXWlQVd1giCqfxolnvsYBB5uIxZWK0PNs1DE6Kt5Gp0iemJn7T1RqHxkShzx7o9vc3dve+Lh7I7GYEe709yrKhY2MLtXGpnRcqNvaIZmTizT7PBiPZcDgnjAmZK+th+Mgr0rAqQWWQx2tD9krq++vu1NVLfcR/RKZ4hD0jkipwzR6dg7xJHWFm9SPUBmo0uVE3CkRfB2xiLm8qpBr7V63CnlOHUoBrYjKtgrdz0rgi0Xhcq9JzMiODPSaboz/jzVJV0k8wo4k6Js7lM1G5M7GJeuvOTult9wp+RjpB6ZInMy2LsjYNceBVvqsX82RXaLs15NftnZpZz2aq0hc5+qy+ehzqPLg950POlKye850mKZ7FXAnv337ldmgMxK0KjF95hra0JlMClNXHT2xaG+Q34KZXZ6PGlVp1LREYculh1J8TcyFb3jyEh3XbU0A2u5ktFRSo/ebErHqbXxlnzC0ZTeRTXsV8OOrPInlVGm/ftE19qcmuDW1F6Ppvab42vVJ2PPUIdVcOrisHmt6iovEv9m23/+AziT0oeuo23Q0KlkzGv3BABY59bV4w0d8e3mNYvFYrFYLBbLfeJvlaxaRdQ/lIsAAAAASUVORK5CYII=') 4 4, auto !important;
+        }
+
+        a,
+        a *,
+        button,
+        button *,
+        input,
+        select,
+        textarea,
+        [role="button"],
+        [role="button"] *,
+        [role="tab"],
+        [role="tab"] *,
+        label,
+        .cursor-pointer,
+        .cursor-pointer * {
+            cursor: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAPzSURBVGhD7ddvaBtlGADwW6dIcrn8aTPL5e7eey/J0rTuj+Zyd7nYWTZBC4OBjDDFD/4ZzH/rbO6SNmnWxVVXlVUF8csYm5ulY/hl6wfBb6N2Vq26NVyaIdbRdnWZtritq5VCxyPRL+W++M1k7H5wX573eR54ed/nhSMIi8VisVgsFsv9a2LLFvIHUXzQHL9nTARxviCgLwt+7rMLm0LhCy0tDnNOTSsE8ImCH5UKCH8xhZnVSwKfHd282WPOq1kFjPp/CgrnC340UEK+uckAf+oPzN0ygmivObcmGZg9+Dtm7xT8aPz7R5r3XmHp8g3MLF8KCNlyILDn8tatbnNNTTGCXMAI4g+uCfjc5Y3+VyZZ+kYBcSeLHPsNCAiKPHveXFORSCTWm2NV8Xkisb7E+Zb+4lmY4ugFQ8CfToQC2hxiYJb1rZR4/u3rAb59JBymK/kNB1TJrcUGxH018nLlCaLO4PmcgfHAtB8NGEHh9R+bm5+8iTkwOPZYCTFDKwILMz7mYlhrDdlzypIjKR4196m6ScSM3UIMLPEMXEHMnIGRMSngd39mfTCPGLhGM5/UZaVhsl8FdyrWweitChCwztynKsZirK2E2NkZxKwWEXt2KoAHxzaF24wm/PQ8z8KvtO/2C8+Kr9ZlxLv2rASe9ONvuXT5uqsnVvBq8nNEPl9n7vm/mxCEUNHvf/EXjM5M8+jbqzw7OC4Iu6/yzPLCBnrcllbet/VKYO+RwKlJH1Ga9J3zcBxcGXWlQVd1giCqfxolnvsYBB5uIxZWK0PNs1DE6Kt5Gp0iemJn7T1RqHxkShzx7o9vc3dve+Lh7I7GYEe709yrKhY2MLtXGpnRcqNvaIZmTizT7PBiPZcDgnjAmZK+th+Mgr0rAqQWWQx2tD9krq++vu1NVLfcR/RKZ4hD0jkipwzR6dg7xJHWFm9SPUBmo0uVE3CkRfB2xiLm8qpBr7V63CnlOHUoBrYjKtgrdz0rgi0Xhcq9JzMiODPSaboz/jzVJV0k8wo4k6Js7lM1G5M7GJeuvOTult9wp+RjpB6ZInMy2LsjYNceBVvqsX82RXaLs15NftnZpZz2aq0hc5+qy+ehzqPLg950POlKye850mKZ7FXAnv337ldmgMxK0KjF95hra0JlMClNXHT2xaG+Q34KZXZ6PGlVp1LREYculh1J8TcyFb3jyEh3XbU0A2u5ktFRSo/ebErHqbXxlnzC0ZTeRTXsV8OOrPInlVGm/ftE19qcmuDW1F6Ppvab42vVJ2PPUIdVcOrisHmt6iovEv9m23/+AziT0oeuo23Q0KlkzGv3BABY59bV4w0d8e3mNYvFYrFYLBbLfeJvlaxaRdQ/lIsAAAAASUVORK5CYII=') 4 4, pointer !important;
+        }
+
+        .sidebar-container,
+        .sidebar-container * {
+            cursor: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAICSURBVGhD7ddLqM5BGMdx1yTHbSVZqkOWCiskha0sTrJxWRBR2BAi5JJbyUZyj+ycs1C27pedlJWFJJdS7krRR0+eU2/TKTv//8l86635PzPz9DzvzPObmSFDKpVKpVKpVCr/LxiDkaV90IDduIlLmI6uckyrwVk8ww38xHZMLMe1FhxAL47iFS7gI9aUY1sJduILHkfQeIPvuRI9mFDOaRWYimO4jrV4i3N44A+95ZwAw0tbI0Qg+JrBvsd5bMnvH9iHJZic42fldmuHcmEYdmRQ8VuPhZnAaVzJ9l10Z7JHSj+Ng/sZaBDF/BQHO2yn0JftjZiDoaWfRsBovEwZvYbLmI/FGfAnrMOv/N6D13iC5bGKpc9/Tm6PlbiKh5nEslSkUKjDGXxwAo+yHXWytRWrgZMdQfZzO8+GWJl+bmEu5mESxpW+GiH/8TtZuHFCx56PAh+Bex0JfMaocn7jYBr25jaKcyES2Y8Z2NQht8HMcn5jxN0HZzqCG4iLWJFyGswu/TQGpmAVNqT2Py+C7yeUanUm0136aZw81EJ9NuNQ3osGoqec2wqiMLNAg0W5tUIiQ3UimXd58YvzoD010Emq0AeMLexdYctHzze8wPjOMa0Au+KNUNo7wdJcpb6yr3Fy2/z1DYDjmcS2sm9QEFeHlN4FZV+lUqlUKpVK5T/hN9f6MFBO/5D0AAAAAElFTkSuQmCC') 4 4, pointer !important;
+        }
+    </style>
 
     <!-- Scripts -->
     <?php echo app('Tighten\Ziggy\BladeRouteGenerator')->generate(); ?>

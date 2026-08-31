@@ -193,7 +193,11 @@ Route::middleware('auth')->group(function () {
         // Production Management
         Route::get('/apt/production', [\App\Http\Controllers\AptController::class , 'production'])->name('apt.production');
         Route::get('/apt/management', [\App\Http\Controllers\AptController::class , 'productionManagement'])->name('apt.management');
+        Route::get('/apt/production/management', [\App\Http\Controllers\AptController::class , 'productionManagement']);
         Route::post('/apt/management/turno', [\App\Http\Controllers\AptController::class , 'storeProductionShiftStart'])->name('apt.management.shift.store');
+        Route::get('/apt/management/activity', [\App\Http\Controllers\AptController::class , 'productionActivity'])->name('apt.management.activity');
+        Route::post('/apt/management/activity', [\App\Http\Controllers\AptController::class , 'storeProductionActivity'])->name('apt.management.activity.store');
+        Route::get('/apt/production/activity', [\App\Http\Controllers\AptController::class , 'productionActivity'])->name('apt.production.activity');
 
         Route::get('/apt/operators/search', [\App\Http\Controllers\AptController::class , 'searchOperators'])->name('apt.operators.search');
         Route::get('/apt/operator', [\App\Http\Controllers\AptController::class , 'createOperator'])->name('apt.operators.create');

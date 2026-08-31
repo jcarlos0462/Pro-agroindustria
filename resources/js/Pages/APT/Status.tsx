@@ -249,11 +249,11 @@ export default function Status({
     filters,
 }: {
     auth: any;
-    warehouses: any[];
-    filters: any;
+    warehouses?: any[];
+    filters?: any;
 }) {
     const [viewingLocation, setViewingLocation] = useState<any>(null);
-    const productionMode = new URLSearchParams(window.location.search).get("from") === "production";
+    const productionMode = filters?.from === "production" || new URLSearchParams(window.location.search).get("from") === "production";
     const [assignedUser, setAssignedUser] = useState("");
     const [shift, setShift] = useState("");
     const [receptionLot, setReceptionLot] = useState("");
@@ -266,7 +266,7 @@ export default function Status({
         }
     });
     const [date, setDate] = useState(
-        filters.date || new Date().toISOString().split("T")[0],
+        filters?.date || new Date().toISOString().split("T")[0],
     );
 
     const today = new Date().toISOString().split("T")[0];
@@ -297,8 +297,8 @@ export default function Status({
         setSavedShift(registration);
     };
 
-    const flatWarehouses = warehouses.filter((w) => w.type === "flat");
-    const cubicledWarehouses = warehouses.filter((w) => w.type === "cubicles");
+    const flatWarehouses = (warehouses || []).filter((w) => w.type === "flat");
+    const cubicledWarehouses = (warehouses || []).filter((w) => w.type === "cubicles");
 
     const handleDateChange = (newDate: string) => {
         setDate(newDate);
@@ -398,7 +398,7 @@ export default function Status({
                                 className="text-gray-500 hover:text-gray-900 flex items-center text-sm font-medium transition-colors"
                             >
                                 <ArrowLeft className="w-4 h-4 mr-1" />
-                                {new URLSearchParams(window.location.search).get("from") === "production" ? "Volver a Gestión de la Producción" : "Volver al menú"}
+                                {new URLSearchParams(window.location.search).get("from") === "production" ? "Volver al menú de submódulos" : "Volver al menú"}
                             </Link>
                         </div>
                         <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">

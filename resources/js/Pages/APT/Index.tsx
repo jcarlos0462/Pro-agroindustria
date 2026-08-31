@@ -22,7 +22,7 @@ import {
 
 export default function Index({ auth, productionMode = false }: { auth: any; productionMode?: boolean }) {
     const productionSubmodules = [
-        { name: "Gestión de la producción", description: "Control y seguimiento de la producción.", icon: Factory, href: route("apt.management"), color: "bg-green-50 text-green-600", hover: "hover:border-green-500" },
+        { name: "Gestión de la producción", description: "Control y seguimiento de la producción.", icon: Factory, href: `${route("apt.management")}?from=production`, color: "bg-green-50 text-green-600", hover: "hover:border-green-500" },
         { name: "Gestión de proceso de embarques", description: "Seguimiento de órdenes y procesos de embarque.", icon: Truck, href: `${route("apt.oe-tracker", { module: "apt" })}&from=production`, color: "bg-blue-50 text-blue-600", hover: "hover:border-blue-500" },
         { name: "Gestión de inventarios", description: "Control de existencias, lotes y ubicaciones.", icon: Package, href: `${route("apt.lots.index")}?from=production`, color: "bg-purple-50 text-purple-600", hover: "hover:border-purple-500" },
         { name: "Gestión de maquinarias", description: "Registro y mantenimiento de maquinaria operativa.", icon: Wrench, href: `${route("apt.status")}?from=production`, color: "bg-orange-50 text-orange-600", hover: "hover:border-orange-500" },
@@ -34,8 +34,8 @@ export default function Index({ auth, productionMode = false }: { auth: any; pro
 
     if (productionMode) {
         return (
-            <DashboardLayout user={auth.user} header="Gestión de la Producción">
-                <Head title="Gestión de la Producción" />
+            <DashboardLayout user={auth.user} header="Gestión de almacenes">
+                <Head title="Gestión de almacenes" />
                 <div data-production-page="true" className="py-12">
                     <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                         <div className="mb-8">
@@ -47,7 +47,7 @@ export default function Index({ auth, productionMode = false }: { auth: any; pro
                                 Volver al menú
                             </Link>
                             <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                                Gestión de la Producción
+                                Gestión de almacenes
                             </h2>
                             <p className="text-gray-600">
                                 Selecciona un submódulo para continuar.
@@ -71,7 +71,19 @@ export default function Index({ auth, productionMode = false }: { auth: any; pro
         );
     }
 
+    const userRoles = (auth?.user?.roles as string[]) || [];
+    const isJefeOrAdmin = userRoles.includes("Jefe de Almacen") || userRoles.includes("Admin");
+    const isAlmacenOnly = userRoles.includes("Almacen") && !isJefeOrAdmin;
+
     const menuItems = [
+        {
+            name: "Gestión de almacenes",
+            icon: Database,
+            href: route("apt.production"),
+            description: "Consultar y gestionar los almacenes en APT.",
+            color: "bg-emerald-50 text-emerald-600",
+            hover: "hover:border-emerald-500",
+        },
         {
             name: "Escanear Entrada",
             icon: Scan,
@@ -79,22 +91,6 @@ export default function Index({ auth, productionMode = false }: { auth: any; pro
             description: "Escanear código QR para registrar entrada/salida.",
             color: "bg-purple-50 text-purple-600",
             hover: "hover:border-purple-500",
-        },
-        {
-            name: "Status APT",
-            icon: LayoutDashboard,
-            href: route("apt.status"),
-            description: "Visualizar ocupación de almacenes y cubículos.",
-            color: "bg-indigo-50 text-indigo-600",
-            hover: "hover:border-indigo-500",
-        },
-        {
-            name: "Gestión de Lotes",
-            icon: Database,
-            href: route("apt.lots.index"),
-            description: "Administración de lotes e inventarios.",
-            color: "bg-teal-50 text-teal-600",
-            hover: "hover:border-teal-500",
         },
         {
             name: "Status Unidades",
@@ -112,15 +108,26 @@ export default function Index({ auth, productionMode = false }: { auth: any; pro
             color: "bg-amber-50 text-amber-600",
             hover: "hover:border-amber-500",
         },
-        {
-            name: "Gestión de la producción",
-            icon: Database,
-            href: route("apt.production"),
-            description: "Consultar y gestionar la producción en APT.",
-            color: "bg-emerald-50 text-emerald-600",
-            hover: "hover:border-emerald-500",
-        },
-       
+        ...(!isAlmacenOnly
+            ? [
+                  {
+                      name: "Status APT",
+                      icon: LayoutDashboard,
+                      href: route("apt.status"),
+                      description: "Visualizar ocupación de almacenes y cubículos.",
+                      color: "bg-indigo-50 text-indigo-600",
+                      hover: "hover:border-indigo-500",
+                  },
+                  {
+                      name: "Gestión de Lotes",
+                      icon: Database,
+                      href: route("apt.lots.index"),
+                      description: "Administración de lotes e inventarios.",
+                      color: "bg-teal-50 text-teal-600",
+                      hover: "hover:border-teal-500",
+                  },
+              ]
+            : []),
     ];
 
     return (

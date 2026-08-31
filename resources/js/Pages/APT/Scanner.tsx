@@ -64,9 +64,11 @@ export default function Scanner({
     const [isSearchingManual, setIsSearchingManual] = useState(false);
 
     const handleFilterChange = (newFilters: any) => {
+        const from = new URLSearchParams(window.location.search).get("from");
         const mergedFilters = pickBy({
             ...filters,
             ...newFilters,
+            ...(from ? { from } : {}),
         });
         router.get(route("apt.scanner"), mergedFilters, {
             preserveState: true,
@@ -247,7 +249,7 @@ export default function Scanner({
                     className="text-gray-500 hover:text-gray-900 flex items-center text-sm font-medium transition-colors"
                 >
                     <ArrowLeft className="w-4 h-4 mr-1" />
-                    {new URLSearchParams(window.location.search).get("from") === "production" ? "Volver a Gestión de la Producción" : "Volver al menú"}
+                    {new URLSearchParams(window.location.search).get("from") === "production" ? "Volver al menú de submódulos" : "Volver al menú"}
                 </Link>
             </div>
 

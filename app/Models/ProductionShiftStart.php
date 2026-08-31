@@ -31,4 +31,9 @@ class ProductionShiftStart extends Model
     {
         return $this->belongsTo(Lot::class);
     }
+
+    public function activities()
+    {
+        return $this->hasMany(ProductionShiftActivity::class);
+    }
 }

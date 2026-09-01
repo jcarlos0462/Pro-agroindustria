@@ -652,8 +652,19 @@ class DashboardController extends Controller
                 ->orderBy('weigh_out_at', 'asc')
                 ->get();
 
+            // Manual Pagination
+            $page = (int) $request->input('page', 1);
+            $perPage = 10;
+            $total = $data->count();
+            $items = $data->skip(($page - 1) * $perPage)->take($perPage)->values();
 
-            return response()->json($data);
+            return response()->json([
+                'current_page' => $page,
+                'data' => $items,
+                'total' => $total,
+                'per_page' => $perPage,
+                'last_page' => max(1, ceil($total / $perPage))
+            ]);
         } catch (Exception $e) {
             Log::error('DrillDownUnitTrips Critical Error: ' . $e->getMessage());
             return response()->json([

@@ -32,10 +32,7 @@ class AptController extends Controller
 
     public function productionManagement(Request $request)
     {
-        if (!$this->ensureProductionTables()) {
-            return redirect()->route('apt.production')
-                ->with('error', 'No se pudo preparar la información de producción. Contacta al administrador para ejecutar las migraciones pendientes.');
-        }
+        $this->ensureProductionTables();
 
         if ($request->header('X-Inertia')) {
             return Inertia::location($request->fullUrl());
@@ -138,7 +135,7 @@ class AptController extends Controller
 
     public function storeProductionShiftStart(Request $request)
     {
-        abort_unless($this->ensureProductionTables(), 503, 'La información de producción no está disponible temporalmente.');
+        $this->ensureProductionTables();
         $authUser = auth()->user();
         $isJefeOrAdmin = $this->isWarehouseChief($authUser);
 
@@ -182,7 +179,7 @@ class AptController extends Controller
 
     public function productionActivity(Request $request)
     {
-        abort_unless($this->ensureProductionTables(), 503, 'La información de producción no está disponible temporalmente.');
+        $this->ensureProductionTables();
 
         if ($request->header('X-Inertia')) {
             return Inertia::location($request->fullUrl());
@@ -220,7 +217,7 @@ class AptController extends Controller
 
     public function storeProductionActivity(Request $request)
     {
-        abort_unless($this->ensureProductionTables(), 503, 'La información de producción no está disponible temporalmente.');
+        $this->ensureProductionTables();
         $validated = $request->validate([
             'production_shift_start_id' => 'required|exists:production_shift_starts,id',
             'type' => 'required|in:incidencia,relevancia',
@@ -257,7 +254,7 @@ class AptController extends Controller
 
     private function productionActivityView(?\App\Models\ProductionShiftStart $registration, Request $request)
     {
-        abort_unless($this->ensureProductionTables(), 503, 'La información de producción no está disponible temporalmente.');
+        $this->ensureProductionTables();
         $activityType = $request->input('activity_type', 'all');
         $activityDate = $request->input('activity_date');
         $activities = collect();
@@ -278,7 +275,7 @@ class AptController extends Controller
         return view('production.activity', compact('registration', 'activities', 'activityType', 'activityDate'));
     }
 
-    private function ensureProductionTables(): bool
+    private function ensureProductionTables(): void
     {
         try {
             if (!Schema::hasTable('production_shift_starts')) {
@@ -315,12 +312,8 @@ class AptController extends Controller
                     $table->index('user_id');
                 });
             }
-            return Schema::hasTable('production_shift_starts')
-                && Schema::hasTable('production_shift_activities');
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::warning('Error ensuring production tables: ' . $e->getMessage());
-
-            return false;
         }
     }
     // Operator Registration

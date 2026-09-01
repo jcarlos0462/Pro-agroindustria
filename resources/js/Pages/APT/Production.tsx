@@ -20,6 +20,7 @@ export default function Production({ auth }: { auth: any }) {
             description: "Control y seguimiento de la producción.",
             icon: Factory,
             href: `${route("apt.management")}?from=production`,
+            external: true,
         },
         {
             id: 2,
@@ -93,26 +94,43 @@ export default function Production({ auth }: { auth: any }) {
                         </h2>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                            {submodules.map((item) => (
-                                <Link
-                                    key={item.id}
-                                    href={item.href}
-                                    className="group bg-white rounded-xl shadow-md border-2 border-transparent p-8 flex flex-col items-center justify-center text-center transition-all duration-300 hover:shadow-xl hover:border-emerald-500"
-                                >
-                                    <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6 bg-emerald-50 text-emerald-600 transition-transform group-hover:scale-110">
-                                        <item.icon className="w-10 h-10" />
-                                    </div>
-                                    <span className="text-sm font-semibold text-gray-500 mb-2">
-                                        {item.id}
-                                    </span>
-                                    <h3 className="text-xl font-bold text-gray-800 break-words w-full">
-                                        {item.name}
-                                    </h3>
-                                    <p className="text-gray-500 mt-2 text-sm">
-                                        {item.description}
-                                    </p>
-                                </Link>
-                            ))}
+                            {submodules.map((item) => {
+                                const cardContent = (
+                                    <>
+                                        <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6 bg-emerald-50 text-emerald-600 transition-transform group-hover:scale-110">
+                                            <item.icon className="w-10 h-10" />
+                                        </div>
+                                        <span className="text-sm font-semibold text-gray-500 mb-2">
+                                            {item.id}
+                                        </span>
+                                        <h3 className="text-xl font-bold text-gray-800 break-words w-full">
+                                            {item.name}
+                                        </h3>
+                                        <p className="text-gray-500 mt-2 text-sm">
+                                            {item.description}
+                                        </p>
+                                    </>
+                                );
+                                const cardClass = "group bg-white rounded-xl shadow-md border-2 border-transparent p-8 flex flex-col items-center justify-center text-center transition-all duration-300 hover:shadow-xl hover:border-emerald-500";
+
+                                return item.external ? (
+                                    <a
+                                        key={item.id}
+                                        href={item.href}
+                                        className={cardClass}
+                                    >
+                                        {cardContent}
+                                    </a>
+                                ) : (
+                                    <Link
+                                        key={item.id}
+                                        href={item.href}
+                                        className={cardClass}
+                                    >
+                                        {cardContent}
+                                    </Link>
+                                );
+                            })}
                         </div>
                     </div>
                 </div>

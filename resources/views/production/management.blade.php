@@ -348,7 +348,7 @@
                                 <option value="">Seleccionar usuario</option>
                                 @foreach($users as $u)
                                     @php
-                                        $userPosition = $u->position ?: ($u->level ?: ($u->roles->pluck('name')->first() ?: 'Almacén'));
+                                        $userPosition = $u->position ?: ($u->level ?: ($u->roles && $u->roles->isNotEmpty() ? $u->roles->pluck('name')->first() : 'Almacén'));
                                         $isSelected = $latestRegistration ? ($latestRegistration->user_id == $u->id) : (auth()->id() == $u->id);
                                     @endphp
                                     <option value="{{ $u->id }}" data-position="{{ $userPosition }}" {{ $isSelected ? 'selected' : '' }}>
@@ -395,7 +395,7 @@
                             <span class="field-label"><i class="fa-solid fa-calendar-days"></i> Fecha</span>
                             <div class="date-box">
                                 <i class="fa-solid fa-calendar-day"></i>
-                                <span>{{ $latestRegistration ? $latestRegistration->started_at->format('d/m/Y') : date('d/m/Y') }}</span>
+                                <span>{{ ($latestRegistration && $latestRegistration->started_at) ? \Carbon\Carbon::parse($latestRegistration->started_at)->format('d/m/Y') : date('d/m/Y') }}</span>
                             </div>
                         </div>
                         @if($canManageShift)

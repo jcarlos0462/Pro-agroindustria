@@ -32,6 +32,15 @@ class AptController extends Controller
 
     public function productionManagement(Request $request)
     {
+        if (!$this->ensureProductionTables()) {
+            return redirect()->route('apt.production')
+                ->with('error', 'No se pudo preparar la información de producción. Contacta al administrador para ejecutar las migraciones pendientes.');
+        }
+
+        if ($request->header('X-Inertia')) {
+            return Inertia::location($request->fullUrl());
+        }
+
         if ($request->boolean('activity')) {
             $registrationQuery = \App\Models\ProductionShiftStart::with(['user:id,name', 'lot:id,folio,plant_origin,warehouse'])
                 ->where('shift', $request->input('shift'))
@@ -52,52 +61,76 @@ class AptController extends Controller
             return $this->productionActivityView($registration, $request);
         }
 
-        $users = User::with('roles')
-            ->where(function ($query) {
-                $query->where('level', 'like', '%Almac%')
-                    ->orWhere('position', 'like', '%Almac%')
-                    ->orWhereHas('roles', function ($roleQuery) {
+        $users = collect();
+        try {
+            $users = User::with('roles')
+                ->where(function ($query) {
+                    if (Schema::hasColumn('users', 'level')) {
+                        $query->where('level', 'like', '%Almac%');
+                    }
+                    if (Schema::hasColumn('users', 'position')) {
+                        $query->orWhere('position', 'like', '%Almac%');
+                    }
+                    $query->orWhereHas('roles', function ($roleQuery) {
                         $roleQuery->where('name', 'like', '%Almac%')
                             ->orWhere('name', 'like', '%APT%')
                             ->orWhere('name', 'like', '%Operad%');
                     });
-            })
-            ->where(function ($query) {
-                $query->where('is_blocked', false)->orWhereNull('is_blocked');
-            })
-            ->orderBy('name')
-            ->get(['id', 'name', 'position', 'level']);
-
-        if ($users->isEmpty()) {
-            $users = User::with('roles')
-                ->where(function ($query) {
-                    $query->where('is_blocked', false)->orWhereNull('is_blocked');
+                })
+                ->when(Schema::hasColumn('users', 'is_blocked'), function ($query) {
+                    $query->where(function ($q) {
+                        $q->where('is_blocked', false)->orWhereNull('is_blocked');
+                    });
                 })
                 ->orderBy('name')
-                ->get(['id', 'name', 'position', 'level']);
+                ->get();
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Error querying filtered users: ' . $e->getMessage());
+        }
+
+        if ($users->isEmpty()) {
+            try {
+                $users = User::with('roles')
+                    ->when(Schema::hasColumn('users', 'is_blocked'), function ($query) {
+                        $query->where(function ($q) {
+                            $q->where('is_blocked', false)->orWhereNull('is_blocked');
+                        });
+                    })
+                    ->orderBy('name')
+                    ->get();
+            } catch (\Throwable $e) {
+                $users = User::orderBy('name')->get();
+            }
         }
 
         $authUser = auth()->user();
         $isJefeOrAdmin = $this->isWarehouseChief($authUser);
         $canManageShift = (bool) $isJefeOrAdmin;
 
-        if ($isJefeOrAdmin) {
-            $lots = Lot::orderBy('created_at', 'desc')->get(['id', 'folio', 'plant_origin', 'warehouse']);
-            $latestRegistration = \App\Models\ProductionShiftStart::with(['user:id,name', 'lot:id,folio'])
-                ->latest('started_at')
-                ->first();
-        } else {
-            $latestRegistration = \App\Models\ProductionShiftStart::with(['user:id,name', 'lot:id,folio'])
-                ->where('user_id', $authUser?->id)
-                ->latest('started_at')
-                ->first();
-            $lots = $latestRegistration?->lot
-                ? collect([$latestRegistration->lot])
-                : collect();
-            $users = $users->where('id', $authUser?->id)->values();
-            if ($users->isEmpty() && $authUser) {
-                $users = collect([$authUser]);
+        $lots = collect();
+        $latestRegistration = null;
+
+        try {
+            if ($isJefeOrAdmin) {
+                $lots = Lot::orderBy('created_at', 'desc')->get(['id', 'folio', 'plant_origin', 'warehouse']);
+                $latestRegistration = \App\Models\ProductionShiftStart::with(['user:id,name', 'lot:id,folio'])
+                    ->latest('started_at')
+                    ->first();
+            } else {
+                $latestRegistration = \App\Models\ProductionShiftStart::with(['user:id,name', 'lot:id,folio'])
+                    ->where('user_id', $authUser?->id)
+                    ->latest('started_at')
+                    ->first();
+                $lots = $latestRegistration?->lot
+                    ? collect([$latestRegistration->lot])
+                    : collect();
+                $users = $users->where('id', $authUser?->id)->values();
+                if ($users->isEmpty() && $authUser) {
+                    $users = collect([$authUser]);
+                }
             }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Error loading lots or shift registration: ' . $e->getMessage());
         }
 
         return view('production.management', compact('users', 'lots', 'latestRegistration', 'canManageShift'));
@@ -105,6 +138,7 @@ class AptController extends Controller
 
     public function storeProductionShiftStart(Request $request)
     {
+        abort_unless($this->ensureProductionTables(), 503, 'La información de producción no está disponible temporalmente.');
         $authUser = auth()->user();
         $isJefeOrAdmin = $this->isWarehouseChief($authUser);
 
@@ -117,7 +151,7 @@ class AptController extends Controller
 
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
-            'position' => 'required|string|max:100',
+            'position' => 'nullable|string|max:100',
             'shift' => 'required|string|in:Turno 1,Turno 2,Turno 3,Turno 1A,Turno 1B',
             'lot_id' => 'required|exists:lots,id',
             'evidence' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:5120',
@@ -128,7 +162,9 @@ class AptController extends Controller
             : null;
 
         $selectedUser = User::with('roles')->findOrFail($validated['user_id']);
-        $position = $selectedUser->position ?: ($selectedUser->level ?: 'Almacén');
+        $position = (!empty($validated['position']) && $validated['position'] !== 'Automático')
+            ? $validated['position']
+            : ($selectedUser->position ?: ($selectedUser->level ?: 'Almacén'));
 
         $registration = \App\Models\ProductionShiftStart::create([
             'user_id' => $validated['user_id'],
@@ -146,7 +182,12 @@ class AptController extends Controller
 
     public function productionActivity(Request $request)
     {
-        $this->ensureProductionActivityTable();
+        abort_unless($this->ensureProductionTables(), 503, 'La información de producción no está disponible temporalmente.');
+
+        if ($request->header('X-Inertia')) {
+            return Inertia::location($request->fullUrl());
+        }
+
         $authUser = auth()->user();
         $isJefeOrAdmin = $this->isWarehouseChief($authUser);
         $registrationQuery = \App\Models\ProductionShiftStart::with(['user:id,name', 'lot:id,folio,plant_origin,warehouse']);
@@ -179,7 +220,7 @@ class AptController extends Controller
 
     public function storeProductionActivity(Request $request)
     {
-        $this->ensureProductionActivityTable();
+        abort_unless($this->ensureProductionTables(), 503, 'La información de producción no está disponible temporalmente.');
         $validated = $request->validate([
             'production_shift_start_id' => 'required|exists:production_shift_starts,id',
             'type' => 'required|in:incidencia,relevancia',
@@ -216,39 +257,71 @@ class AptController extends Controller
 
     private function productionActivityView(?\App\Models\ProductionShiftStart $registration, Request $request)
     {
-        $this->ensureProductionActivityTable();
+        abort_unless($this->ensureProductionTables(), 503, 'La información de producción no está disponible temporalmente.');
         $activityType = $request->input('activity_type', 'all');
         $activityDate = $request->input('activity_date');
-        $activities = $registration
-            ? \App\Models\ProductionShiftActivity::with('user:id,name')
-                ->where('production_shift_start_id', $registration->id)
-                ->when(in_array($activityType, ['incidencia', 'relevancia'], true), fn ($query) => $query->where('type', $activityType))
-                ->when($activityDate, fn ($query) => $query->whereDate('occurred_at', $activityDate))
-                ->latest('occurred_at')
-                ->get()
-            : collect();
+        $activities = collect();
+
+        if ($registration) {
+            try {
+                $activities = \App\Models\ProductionShiftActivity::with('user:id,name')
+                    ->where('production_shift_start_id', $registration->id)
+                    ->when(in_array($activityType, ['incidencia', 'relevancia'], true), fn ($query) => $query->where('type', $activityType))
+                    ->when($activityDate, fn ($query) => $query->whereDate('occurred_at', $activityDate))
+                    ->latest('occurred_at')
+                    ->get();
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Error loading activities: ' . $e->getMessage());
+            }
+        }
 
         return view('production.activity', compact('registration', 'activities', 'activityType', 'activityDate'));
     }
 
-    private function ensureProductionActivityTable(): void
+    private function ensureProductionTables(): bool
     {
-        if (Schema::hasTable('production_shift_activities')) {
-            return;
-        }
+        try {
+            if (!Schema::hasTable('production_shift_starts')) {
+                Schema::create('production_shift_starts', function ($table) {
+                    $table->id();
+                    $table->unsignedBigInteger('user_id');
+                    $table->string('position')->default('Automático');
+                    $table->dateTime('started_at');
+                    $table->string('shift');
+                    $table->uuid('lot_id')->nullable();
+                    $table->string('evidence_path')->nullable();
+                    $table->timestamps();
 
-        Schema::create('production_shift_activities', function ($table) {
-            $table->id();
-            $table->foreignId('production_shift_start_id')->constrained('production_shift_starts')->cascadeOnDelete();
-            $table->foreignId('user_id')->constrained('users');
-            $table->string('type', 20);
-            $table->text('description');
-            $table->string('location')->nullable();
-            $table->string('evidence_path')->nullable();
-            $table->dateTime('occurred_at');
-            $table->timestamps();
-            $table->index(['production_shift_start_id', 'occurred_at'], 'psa_shift_time_idx');
-        });
+                    $table->index(['started_at', 'shift']);
+                    $table->index('user_id');
+                    $table->index('lot_id');
+                });
+            }
+
+            if (!Schema::hasTable('production_shift_activities')) {
+                Schema::create('production_shift_activities', function ($table) {
+                    $table->id();
+                    $table->unsignedBigInteger('production_shift_start_id');
+                    $table->unsignedBigInteger('user_id');
+                    $table->string('type', 20);
+                    $table->text('description');
+                    $table->string('location')->nullable();
+                    $table->string('evidence_path')->nullable();
+                    $table->dateTime('occurred_at');
+                    $table->timestamps();
+
+                    $table->index(['production_shift_start_id', 'occurred_at'], 'psa_shift_time_idx');
+                    $table->index('production_shift_start_id');
+                    $table->index('user_id');
+                });
+            }
+            return Schema::hasTable('production_shift_starts')
+                && Schema::hasTable('production_shift_activities');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Error ensuring production tables: ' . $e->getMessage());
+
+            return false;
+        }
     }
     // Operator Registration
     public function createOperator()

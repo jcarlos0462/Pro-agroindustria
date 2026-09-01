@@ -22,7 +22,7 @@ import {
 
 export default function Index({ auth, productionMode = false }: { auth: any; productionMode?: boolean }) {
     const productionSubmodules = [
-        { name: "Gestión de la producción", description: "Control y seguimiento de la producción.", icon: Factory, href: `${route("apt.management")}?from=production`, color: "bg-green-50 text-green-600", hover: "hover:border-green-500" },
+        { name: "Gestión de la producción", description: "Control y seguimiento de la producción.", icon: Factory, href: `${route("apt.management")}?from=production`, color: "bg-green-50 text-green-600", hover: "hover:border-green-500", external: true },
         { name: "Gestión de proceso de embarques", description: "Seguimiento de órdenes y procesos de embarque.", icon: Truck, href: `${route("apt.oe-tracker", { module: "apt" })}&from=production`, color: "bg-blue-50 text-blue-600", hover: "hover:border-blue-500" },
         { name: "Gestión de inventarios", description: "Control de existencias, lotes y ubicaciones.", icon: Package, href: `${route("apt.lots.index")}?from=production`, color: "bg-purple-50 text-purple-600", hover: "hover:border-purple-500" },
         { name: "Gestión de maquinarias", description: "Registro y mantenimiento de maquinaria operativa.", icon: Wrench, href: `${route("apt.status")}?from=production`, color: "bg-orange-50 text-orange-600", hover: "hover:border-orange-500" },
@@ -54,16 +54,29 @@ export default function Index({ auth, productionMode = false }: { auth: any; pro
                             </p>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                            {productionSubmodules.map((item, index) => (
-                                <Link key={item.name} href={item.href} className={`group bg-white rounded-xl shadow-md border-2 border-transparent p-8 flex flex-col items-center justify-center text-center transition-all duration-300 hover:shadow-xl ${item.hover}`}>
-                                    <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-6 transition-transform group-hover:scale-110 ${item.color}`}>
-                                        <item.icon className="w-10 h-10" />
-                                    </div>
-                                    <span className="text-sm font-semibold text-gray-500 mb-2">{index + 1}</span>
-                                    <h3 className="text-xl font-bold text-gray-800 break-words w-full">{item.name}</h3>
-                                    <p className="text-gray-500 mt-2 text-sm">{item.description}</p>
-                                </Link>
-                            ))}
+                            {productionSubmodules.map((item, index) => {
+                                const cardContent = (
+                                    <>
+                                        <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-6 transition-transform group-hover:scale-110 ${item.color}`}>
+                                            <item.icon className="w-10 h-10" />
+                                        </div>
+                                        <span className="text-sm font-semibold text-gray-500 mb-2">{index + 1}</span>
+                                        <h3 className="text-xl font-bold text-gray-800 break-words w-full">{item.name}</h3>
+                                        <p className="text-gray-500 mt-2 text-sm">{item.description}</p>
+                                    </>
+                                );
+                                const cardClass = `group bg-white rounded-xl shadow-md border-2 border-transparent p-8 flex flex-col items-center justify-center text-center transition-all duration-300 hover:shadow-xl ${item.hover}`;
+
+                                return item.external ? (
+                                    <a key={item.name} href={item.href} className={cardClass}>
+                                        {cardContent}
+                                    </a>
+                                ) : (
+                                    <Link key={item.name} href={item.href} className={cardClass}>
+                                        {cardContent}
+                                    </Link>
+                                );
+                            })}
                         </div>
                     </div>
                 </div>

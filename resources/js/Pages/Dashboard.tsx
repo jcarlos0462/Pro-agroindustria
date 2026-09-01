@@ -109,7 +109,7 @@ export default function Dashboard({
     // --- DRILL-DOWN LOGIC ---
     const [drillLevel, setDrillLevel] = useState<0 | 1 | 2 | 3>(0); // 0: Main, 1: Warehouses, 2: Units, 3: Trips
     const [drillData, setDrillData] = useState<any>([]); // For level 2 this will be the paginated object
-    const [tripsData, setTripsData] = useState<any>([]); // Paginated object for level 3
+    const [tripsData, setTripsData] = useState<any[]>([]);
     const [drillLoading, setDrillLoading] = useState(false);
     const [selectedDate, setSelectedDate] = useState<string | null>(null);
     const [selectedWarehouse, setSelectedWarehouse] = useState<string | null>(
@@ -175,7 +175,7 @@ export default function Dashboard({
         }
     };
 
-    const handleUnitClick = async (unit: any, page: number = 1) => {
+    const handleUnitClick = async (unit: any) => {
         setSelectedUnit({
             operator_name: unit.operator_name,
             economic_number: unit.economic_number,
@@ -194,7 +194,6 @@ export default function Dashboard({
                         operator_name: unit.operator_name,
                         economic_number: unit.economic_number,
                         operation_type: viewMode,
-                        page,
                     },
                 },
             );
@@ -220,10 +219,6 @@ export default function Dashboard({
         // We don't need to re-fetch if we preserve state, but drillData Level 2 is the paginated object
     };
 
-    const handleTripsPageChange = (page: number) => {
-        if (selectedUnit) handleUnitClick(selectedUnit, page);
-    };
-
     const categories =
         viewMode === "scale"
             ? ["scale"]
@@ -231,7 +226,12 @@ export default function Dashboard({
                 ? ["burreo"]
                 : ["total"];
 
-    const colors = ["blue"]; // Main chart is always blue regardless of view mode
+    const colors =
+        viewMode === "scale"
+            ? ["blue"]
+            : viewMode === "burreo"
+                ? ["amber"]
+                : ["blue"]; // Let's use blue for total as well or indigo
 
     return (
         <DashboardLayout user={auth.user} header="Centro de Mando Operativo">
@@ -528,7 +528,7 @@ export default function Dashboard({
 
                             <div className="flex-1 relative">
                                 {drillLevel === 0 ? (
-                                    <div className="dashboard-tonnage-chart h-full">
+                                    <div className="h-full">
                                         <BarChart
                                             className="h-80"
                                             data={charts.daily_tonnage}
@@ -764,7 +764,7 @@ export default function Dashboard({
                                                             </tr>
                                                         </thead>
                                                         <tbody className="divide-y divide-gray-100">
-                                                            {tripsData.data?.map(
+                                                            {tripsData.map(
                                                                 (
                                                                     trip: any,
                                                                     idx: number,
@@ -818,53 +818,6 @@ export default function Dashboard({
                                                         </tbody>
                                                     </table>
                                                 </div>
-
-                                                {/* Level 3 Pagination */}
-                                                {tripsData.last_page > 1 && (
-                                                    <div className="flex justify-center items-center gap-2 mt-2">
-                                                        <button
-                                                            disabled={
-                                                                tripsData.current_page ===
-                                                                1
-                                                            }
-                                                            onClick={() =>
-                                                                handleTripsPageChange(
-                                                                    tripsData.current_page -
-                                                                    1,
-                                                                )
-                                                            }
-                                                            className="p-2 rounded-lg bg-white border border-gray-200 disabled:opacity-30 hover:bg-gray-50 transition-all font-bold text-xs uppercase"
-                                                        >
-                                                            Anterior
-                                                        </button>
-                                                        <span className="text-xs font-black text-slate-500">
-                                                            Página{" "}
-                                                            {
-                                                                tripsData.current_page
-                                                            }{" "}
-                                                            de{" "}
-                                                            {
-                                                                tripsData.last_page
-                                                            }
-                                                        </span>
-                                                        <button
-                                                            disabled={
-                                                                tripsData.current_page ===
-                                                                tripsData.last_page
-                                                            }
-                                                            onClick={() =>
-                                                                handleTripsPageChange(
-                                                                    tripsData.current_page +
-                                                                    1,
-                                                                )
-                                                            }
-                                                            className="p-2 rounded-lg bg-white border border-gray-200 disabled:opacity-30 hover:bg-gray-50 transition-all font-bold text-xs uppercase"
-                                                        >
-                                                            Siguiente
-                                                        </button>
-                                                    </div>
-                                                )}
-
                                                 <p className="text-center text-[10px] text-gray-400 font-bold uppercase mt-4">
                                                     * Desglose individual de
                                                     vueltas realizadas el día{" "}
@@ -964,9 +917,6 @@ export default function Dashboard({
                 </div>
             </div>
             <style>{`
-                .dashboard-tonnage-chart .recharts-bar-rectangle path {
-                    fill: #3b82f6 !important;
-                }
                 @keyframes float {
                     0% { transform: translateY(0px); }
                     50% { transform: translateY(-6px); }

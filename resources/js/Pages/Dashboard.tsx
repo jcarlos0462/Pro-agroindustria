@@ -231,7 +231,7 @@ export default function Dashboard({
             ? ["blue"]
             : viewMode === "burreo"
                 ? ["amber"]
-                : ["blue"]; // Let's use blue for total as well or indigo
+                : ["blue"];
 
     return (
         <DashboardLayout user={auth.user} header="Centro de Mando Operativo">
@@ -459,33 +459,30 @@ export default function Dashboard({
                         <div className="bg-white rounded-[2rem] p-8 shadow-xl border border-gray-100 min-h-[500px] flex flex-col">
                             <div className="flex justify-between items-start mb-6">
                                 <div>
-                                    {drillLevel === 0 ? (
-                                        <>
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <h2 className="text-4xl font-black text-slate-800 tracking-tighter">
-                                                    Total:{" "}
-                                                    {formatMT(
-                                                        effectiveTotal / 1000,
-                                                    )}
-                                                </h2>
-                                                {viewMode !== "all" && (
-                                                    <span
-                                                        className={`px-2 py-1 rounded text-[10px] font-black uppercase tracking-wider ${viewMode === "scale"
-                                                            ? "bg-blue-100 text-blue-700"
-                                                            : "bg-amber-100 text-amber-700"
-                                                            }`}
-                                                    >
-                                                        {viewMode === "scale"
-                                                            ? "Vía Báscula"
-                                                            : "Vía Burreo"}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">
-                                                Toneladas Métricas Descargadas
-                                            </p>
-                                        </>
-                                    ) : (
+                                    <>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <h2 className="text-4xl font-black text-slate-800 tracking-tighter">
+                                                Total:{" "}
+                                                {formatMT(effectiveTotal / 1000)}
+                                            </h2>
+                                            {viewMode !== "all" && (
+                                                <span
+                                                    className={`px-2 py-1 rounded text-[10px] font-black uppercase tracking-wider ${viewMode === "scale"
+                                                        ? "bg-blue-100 text-blue-700"
+                                                        : "bg-amber-100 text-amber-700"
+                                                        }`}
+                                                >
+                                                    {viewMode === "scale"
+                                                        ? "Vía Báscula"
+                                                        : "Vía Burreo"}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">
+                                            Toneladas Métricas Descargadas
+                                        </p>
+                                    </>
+                                    {drillLevel > 0 && (
                                         <div className="flex items-center gap-4">
                                             <button
                                                 onClick={
@@ -527,30 +524,26 @@ export default function Dashboard({
                             </div>
 
                             <div className="flex-1 relative">
-                                {drillLevel === 0 ? (
-                                    <div className="h-full">
-                                        <BarChart
-                                            className="h-80"
-                                            data={charts.daily_tonnage}
-                                            index="date"
-                                            categories={categories}
-                                            colors={colors}
-                                            valueFormatter={(val: any) =>
-                                                `${(val / 1000).toLocaleString(undefined, { minimumFractionDigits: 3, maximumFractionDigits: 3 })} TM`
-                                            }
-                                            showAnimation={true}
-                                            showLegend={false}
-                                            yAxisWidth={50}
-                                            onValueChange={(v: any) =>
-                                                handleBarClick(v)
-                                            }
-                                        />
-                                        <p className="text-center text-[10px] text-gray-400 font-bold uppercase mt-4 animate-pulse">
-                                            💡 Haz clic en una barra para ver
-                                            detalles
-                                        </p>
-                                    </div>
-                                ) : (
+                                <div className="h-full">
+                                    <BarChart
+                                        className="h-80"
+                                        data={charts.daily_tonnage}
+                                        index="date"
+                                        categories={categories}
+                                        colors={colors}
+                                        valueFormatter={(val: any) =>
+                                            `${(val / 1000).toLocaleString(undefined, { minimumFractionDigits: 3, maximumFractionDigits: 3 })} TM`
+                                        }
+                                        showAnimation={true}
+                                        showLegend={false}
+                                        yAxisWidth={50}
+                                        onValueChange={(v: any) => handleBarClick(v)}
+                                    />
+                                    <p className="text-center text-[10px] text-gray-400 font-bold uppercase mt-4 animate-pulse">
+                                        Haz clic en una barra para ver detalles
+                                    </p>
+                                </div>
+                                {drillLevel > 0 && (
                                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                                         {drillLoading ? (
                                             <div className="flex items-center justify-center h-80">

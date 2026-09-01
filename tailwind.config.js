@@ -10,6 +10,13 @@ export default {
         './resources/views/**/*.blade.php',
         './resources/js/**/*.tsx',
         './resources/js/**/*.ts',
+        './node_modules/@tremor/**/*.{js,ts,jsx,tsx}',
+    ],
+    safelist: [
+        {
+            pattern: /^(bg|border|fill|stroke|text)-(blue|amber)-(50|100|200|300|400|500|600|700|800|900|950)$/,
+            variants: ['dark'],
+        },
     ],
     theme: {
         container: {

@@ -12,7 +12,12 @@ $kernel->bootstrap();
 header('Content-Type: text/plain');
 
 try {
-    echo "Limpiando cachés de Laravel...\n\n";
+    echo "Ejecutando migraciones pendientes...\n\n";
+
+    \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+    echo \Illuminate\Support\Facades\Artisan::output();
+
+    echo "\nLimpiando cachés de Laravel...\n\n";
 
     \Illuminate\Support\Facades\Artisan::call('optimize:clear');
     echo \Illuminate\Support\Facades\Artisan::output();

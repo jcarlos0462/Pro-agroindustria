@@ -652,6 +652,7 @@ class DashboardController extends Controller
                 ->orderBy('weigh_out_at', 'asc')
                 ->get();
 
+
             return response()->json($data);
         } catch (Exception $e) {
             Log::error('DrillDownUnitTrips Critical Error: ' . $e->getMessage());

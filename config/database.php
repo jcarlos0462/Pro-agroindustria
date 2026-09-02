@@ -46,7 +46,7 @@ return [
         'mysql' => [
             'driver' => 'mysql',
             'url' => env('DB_URL'),
-            'host' => env('DB_HOST', 'localhost'),
+            'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '3306'),
             'database' => env('DB_DATABASE', 'laravel'),
             'username' => env('DB_USERNAME', 'root'),
@@ -60,7 +60,6 @@ return [
             'engine' => null,
             'timezone' => env('DB_TIMEZONE', '-06:00'),
             'options' => extension_loaded('pdo_mysql') ? array_filter([
-                \PDO::ATTR_TIMEOUT => (int) env('DB_CONNECT_TIMEOUT', 5),
                 (PHP_VERSION_ID >= 80500 ? \Pdo\Mysql::ATTR_SSL_CA : \PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
         ],

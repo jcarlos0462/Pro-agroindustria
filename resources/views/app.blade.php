@@ -20,7 +20,7 @@
     <link rel="manifest" href="{{ asset('build/manifest.webmanifest') }}">
 
     <script>
-        window.currentUserRoles = @json(request()->is('login') ? [] : (auth()->check() ? auth()->user()->getRoleNames() : []));
+        window.currentUserRoles = @json(auth()->check() ? auth()->user()->getRoleNames() : []);
 
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then((registrations) => {

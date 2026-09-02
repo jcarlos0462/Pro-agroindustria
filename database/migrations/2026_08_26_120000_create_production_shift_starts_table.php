@@ -7,10 +7,6 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        if (Schema::hasTable('production_shift_starts')) {
-            return;
-        }
-
         Schema::create('production_shift_starts', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users');

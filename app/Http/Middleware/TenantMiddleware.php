@@ -19,6 +19,10 @@ class TenantMiddleware
         $tenantId = env('APP_TENANT', 'proagro');
         $tenant = null;
 
+        if ($request->is('login')) {
+            return $next($request);
+        }
+
         // 1. Try to find tenant in database (if table exists)
         try {
             $tenant = \App\Models\Tenant::where('domain', $domain)

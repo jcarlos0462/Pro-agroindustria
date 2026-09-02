@@ -17,6 +17,10 @@ class CheckUserBlocked
      */
     public function handle(Request $request, Closure $next): Response
     {
+        if ($request->is('login')) {
+            return $next($request);
+        }
+
         if (Auth::check() && Auth::user()->is_blocked) {
             Auth::logout();
             $request->session()->invalidate();
